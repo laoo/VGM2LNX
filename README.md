@@ -12,6 +12,6 @@ VGM2LNX input.vgm [output.lnx]
 If output file is missing, input file is taken with replaced extension to .lnx
 
 ## Caveats
-Generated player does not work with Handy or any other Lynx emulator know at the time of writing. Please use only real hardware.
+Generated player does not work with Handy or any other Lynx emulator known at the time of writing. Please use only real hardware.
 
 
