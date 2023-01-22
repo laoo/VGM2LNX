@@ -5,6 +5,7 @@
 #include "rational.hpp"
 #include "Ex.hpp"
 #include <iostream>
+#include <algorithm>
 
 template<typename T>
 static T value( std::vector<uint8_t> const& plain, size_t off )

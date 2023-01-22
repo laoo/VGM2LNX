@@ -19,7 +19,7 @@ public:
     return *this;
   }
 
-  char const* what() const
+  char const* what() const noexcept
   {
     mStr = mSS->str();
     return mStr.c_str();
