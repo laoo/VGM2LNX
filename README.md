@@ -5,6 +5,14 @@ Conversion tool for VGM files holding Lynx music to Lynx cartridge images with s
 
 Use CMake. Requires C++17
 
+To recompile `vgmplay.asm` use [mads](https://github.com/tebe6502/Mad-Assembler) and [HAMLET](https://github.com/laoo/HAMLET) similarly to:
+
+```
+mads vgmplay.asm
+HAMLET vgmplay.obx vgmplay.bin
+xxd -i vgmplay.bin > vgmplay.h
+```
+
 ## Usage
 ```
 VGM2LNX input.vgm [output.lnx]
