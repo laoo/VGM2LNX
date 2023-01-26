@@ -134,17 +134,10 @@ start
 
     lda #1
     jsr LYNX.KERNEL.SELECT_SECTOR
-    lda #24
-    sta LYNX.TIMER5_BACKUP
-    lda #LYNX.@TIM_CONTROLA(ENABLE_RELOAD|ENABLE_COUNT|AUD_1)
-    sta LYNX.TIMER5_CONTROLA
 
     cli
 
-    lda #$80
-    sta LYNX.INTSET
-@   dec
-    bne @-
+    jsr streamHandler
 
 main
     lda #0
@@ -234,12 +227,19 @@ SCRTAB3L equ $1600
 SCRTAB3H equ $1700
 
 irq pha
-    phx
-    phy
     lda #$ff
     sta LYNX.INTRST
+    phx
+    phy
 
-irq_loop
+    jsr streamHandler
+
+    ply
+    plx
+    pla
+    rti
+
+streamHandler
     lda LYNX.RCART0 ;command
     asl
     sta command
@@ -298,12 +298,8 @@ autojsr = *+1
 
 skip_jsr
     asl command
-    bcs irq_loop
-
-    ply
-    plx
-    pla
-    rti
+    bcs streamHandler
+    rts
 
 sc_h = 96/2
 sc_hh = sc_h/2
