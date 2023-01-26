@@ -329,7 +329,7 @@ void Image::changeSector( uint8_t sector )
   int free = lastSectorFree();
 
   assert( free >= 2 );
-  push_back( FLAG_CHANGE_SECTOR );
+  push_back( FLAG_CHANGE_SECTOR | FLAG_REPEAT );
   push_back( sector ? sector : (uint8_t)( currentSectorNumber() + 1 ) );
   if ( !sector )
     addSector();
