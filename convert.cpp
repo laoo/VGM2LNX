@@ -226,8 +226,10 @@ std::vector<uint8_t> convert( std::vector<uint8_t> const& plain )
 Image::Image()
 {
   addSector();
+#ifdef STANDALONE
   std::copy_n( vgmplay_bin, vgmplay_bin_len, mSectors.back().data.data() );
   addSector();
+#endif
 }
 
 void Image::writeMikey( uint8_t addr, uint8_t value )
@@ -284,7 +286,9 @@ std::vector<uint8_t> Image::result() const
 {
   std::vector<uint8_t> result;
 
-  std::copy_n( (uint8_t const*)&mHeader, sizeof( mHeader ), std::back_inserter( result ) );
+#ifdef STANDALONE
+    std::copy_n( (uint8_t const*)&mHeader, sizeof( mHeader ), std::back_inserter( result ) );
+#endif
 
   for ( auto const& sector : mSectors )
   {

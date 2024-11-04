@@ -48,7 +48,7 @@ namespace rational {
             }
             return a;
         }
-        
+
     } // namespace detail
 
     template<class T>
@@ -64,7 +64,7 @@ namespace rational {
             numer(0),
             denom(1)
         {  }
-        
+
         inline CONSTEXPR Ratio(const T& numer) noexcept :
             numer(numer),
             denom(1)
@@ -225,7 +225,7 @@ namespace rational {
         {
             return !(lhs < rhs);
         }
-            
+
     };
 
     template<class T>
@@ -296,7 +296,7 @@ namespace rational {
     {
         T numer = r.numer;
         T denom = r.denom;
-        
+
         const T g = detail::gcd(numer, denom);
 
         numer /= g;
@@ -327,7 +327,7 @@ namespace rational {
     {
         const T numer = r.numer;
         const T denom = r.denom;
-        
+
         if(is_negative(r)) {
             return Ratio<T>(numer / denom);
         } else {
@@ -347,7 +347,7 @@ namespace rational {
             fractional = zero - fractional;
         }
 
-        const bool half_or_larger;
+        bool half_or_larger = false;
         if(fractional.denom % 2 == 0) {
             half_or_larger = fractional.numer >= fractional.denom / two;
         } else {
@@ -400,7 +400,7 @@ namespace rational {
     {
         return (is_negative(r) ? -r : r);
     }
-    
+
     template<class T>
     inline Ratio<T> abs_sub(const Ratio<T>& lhs, const Ratio<T>& rhs) noexcept
     {
