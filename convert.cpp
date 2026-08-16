@@ -130,7 +130,6 @@ private:
   std::vector<WriteMikey> mWrites = {};
   Rational mIdealTime{};
   Rational mRealTime{};
-  TimerUpdate mLastTimerUpdate{};
 
 };
 
@@ -265,8 +264,7 @@ void Image::wait( int samples )
   if ( diff > 0 )
   {
     TimerUpdate newTimerUpdate = buf.wait( diff );
-    mRealTime += Rational{ newTimerUpdate.cycles() + mLastTimerUpdate.timer5Cycle(), 1000000 };
-    mLastTimerUpdate = newTimerUpdate;
+    mRealTime += Rational{ newTimerUpdate.cycles(), 1000000 };
   }
 
   for ( auto const& write : mWrites )
@@ -359,8 +357,8 @@ TimerUpdate Image::TempBuffer::wait( Rational diff )
   static constexpr uint8_t TIMER5_CONTROLA = 0x15;
   static constexpr uint8_t TIMER7_CONTROLA = 0x1d;
   static constexpr uint8_t TIMER7_COUNT  = 0x1e;
+  static constexpr uint8_t TIMER7_CONTROLB = 0x1f;
   static constexpr uint8_t ENABLE_INT    = 0b10000000;
-  static constexpr uint8_t RESET_DONE    = 0b01000000;
   static constexpr uint8_t ENABLE_RELOAD = 0b00010000;
   static constexpr uint8_t ENABLE_COUNT  = 0b00001000;
   static constexpr uint8_t AUD_LINKING   = 0b00000111;
@@ -373,7 +371,8 @@ TimerUpdate Image::TempBuffer::wait( Rational diff )
   TimerUpdate timerUpdate = TimerUpdate::create( Rational::to_integer( diff * 1000000 ) );
 
   write( { TIMER7_COUNT, timerUpdate.timer7Count } );
-  write( { TIMER7_CONTROLA, (uint8_t)( ENABLE_INT | RESET_DONE | ENABLE_COUNT | AUD_LINKING ) } );
+  write( { TIMER7_CONTROLB, 0 } );
+  write( { TIMER7_CONTROLA, (uint8_t)( ENABLE_INT | ENABLE_COUNT | AUD_LINKING ) } );
   write( { TIMER5_BACKUP, timerUpdate.timer5Backup } );
   write( { TIMER5_CONTROLA, (uint8_t)( ENABLE_RELOAD | ENABLE_COUNT | (uint8_t)timerUpdate.timer5Sale ) } );
 
@@ -428,7 +427,7 @@ void Image::TempBuffer::commit( bool final )
     mImage.addSector();
 
   mData.clear();
-  mWaiting = false;
+  mWaiting = mWaiting && !final;
 }
 
 TimerUpdate TimerUpdate::create( int64_t cycles )
