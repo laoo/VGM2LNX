@@ -162,6 +162,18 @@ std::vector<uint8_t> convert( std::vector<uint8_t> const& plain )
 
 
   Image image;
+  int pendingWait = 0;
+
+  auto scheduleWait = [&]( int samples )
+  {
+    if ( samples == 1 )
+      pendingWait++;
+    else
+    {
+      image.wait( pendingWait + samples );
+      pendingWait = 0;
+    }
+  };
 
   for ( size_t i = dataOffset; i < eofOffset; )
   {
@@ -188,23 +200,26 @@ std::vector<uint8_t> convert( std::vector<uint8_t> const& plain )
     {
       int wait = value<uint16_t>( plain, i );
       i += 2;
-      image.wait( wait );
+      scheduleWait( wait );
     }
     else if ( cmd == 0x62 )
     {
-      image.wait( 735 );
+      scheduleWait( 735 );
     }
     else if ( cmd == 0x63 )
     {
-      image.wait( 882 );
+      scheduleWait( 882 );
     }
     else if ( ( cmd >> 4 ) == 0x7 )
     {
       int wait = ( cmd & 0xf ) + 1;
-      image.wait( wait );
+      scheduleWait( wait );
     }
     else if ( cmd == 0x66 )
     {
+      if ( pendingWait > 0 )
+        image.wait( pendingWait );
+
       //silence
       image.writeMikey( 0x20, 0 );
       image.writeMikey( 0x25, 0 );
@@ -355,6 +370,7 @@ TimerUpdate Image::TempBuffer::wait( Rational diff )
 {
   static constexpr uint8_t TIMER5_BACKUP = 0x14;
   static constexpr uint8_t TIMER5_CONTROLA = 0x15;
+  static constexpr uint8_t TIMER5_COUNT = 0x16;
   static constexpr uint8_t TIMER7_CONTROLA = 0x1d;
   static constexpr uint8_t TIMER7_COUNT  = 0x1e;
   static constexpr uint8_t TIMER7_CONTROLB = 0x1f;
@@ -370,10 +386,12 @@ TimerUpdate Image::TempBuffer::wait( Rational diff )
 
   TimerUpdate timerUpdate = TimerUpdate::create( Rational::to_integer( diff * 1000000 ) );
 
+  write( { TIMER5_CONTROLA, 0 } );
+  write( { TIMER5_BACKUP, timerUpdate.timer5Backup } );
+  write( { TIMER5_COUNT, timerUpdate.timer5Backup } );
   write( { TIMER7_COUNT, timerUpdate.timer7Count } );
   write( { TIMER7_CONTROLB, 0 } );
   write( { TIMER7_CONTROLA, (uint8_t)( ENABLE_INT | ENABLE_COUNT | AUD_LINKING ) } );
-  write( { TIMER5_BACKUP, timerUpdate.timer5Backup } );
   write( { TIMER5_CONTROLA, (uint8_t)( ENABLE_RELOAD | ENABLE_COUNT | (uint8_t)timerUpdate.timer5Sale ) } );
 
   mWaiting = true;
@@ -475,7 +493,7 @@ TimerUpdate::TimerUpdate( int64_t cycles, uint8_t initialTimer7Count ) : timer7C
 
 int64_t TimerUpdate::cycles() const
 {
-  return ( timer5Cycle() + 1 ) * ( timer7Count + 1 );
+  return ( timer5Backup + 1 ) * toMult( timer5Sale ) * ( timer7Count + 1 );
 }
 
 int64_t TimerUpdate::timer5Cycle() const
